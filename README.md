@@ -20,3 +20,9 @@ Some sample OpenCV code:
 
 http://docs.opencv.org/trunk/df/d9d/tutorial_py_colorspaces.html
 http://opencv-srf.blogspot.ca/2010/09/object-detection-using-color-seperation.html
+
+### todo
+
+Add multi-colour gestures.
+
+Investigate GPU acceleration. Requires NVidia graphics card with CUDA.
