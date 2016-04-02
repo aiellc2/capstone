@@ -223,7 +223,7 @@ int main(int argc, char **argv) {
 
       frame = frame + imgLines;
 
- 			if(!frame.empty() ){
+ 			if(!frame.empty()){
                 imshow("im1", imgThresholded);
                 imshow("original", frame);
                 imshow("HuePreview", diagBGR);
