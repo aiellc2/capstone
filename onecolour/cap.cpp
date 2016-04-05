@@ -1,5 +1,5 @@
 #include "opencv2/opencv.hpp"
-#include <opencv2/gpu/gpu.hpp>
+//#include <opencv2/gpu/gpu.hpp>
 #include <pthread.h>
 #include <semaphore.h>
 #include <queue>
@@ -119,10 +119,10 @@ int main(int argc, char **argv) {
       pthread_mutex_unlock(&mutex);
 
       diagH.setTo(Scalar(iLowH,255,255));
-      cvtColor(diagH,diagBGR, COLOR_HSV2BGR);
+      cvtColor(diagH,diagBGR, COLOR_HSV2RGB);
 
 
-      cvtColor(frame,im_HSV,COLOR_BGR2HSV);
+      cvtColor(frame,im_HSV,COLOR_RGB2HSV);
 
 
       inRange(im_HSV, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), imgThresholded); //Threshold the image
@@ -157,7 +157,7 @@ int main(int argc, char **argv) {
 
       if (dArea > 10000) //make sure detected area is big enough
       {
-       //calculate the position of the ball
+       //calculate the position
        int posX = dM10 / dArea;
        int posY = dM01 / dArea;
 
