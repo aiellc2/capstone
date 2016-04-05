@@ -8,6 +8,8 @@ Uses [OpenCV](http://opencv.org) (required to compile)
 
 Currently implements the same functionality we had in Matlab, with back/forward gestures. Current keypress code is specific to Mac OS for controlling iBooks, but can be easily changed.
 
+Two colour gesture for zoom in/out is working.
+
 ### New functionality
 
 Performance has been improved by using multithreading. One thread captures images from the camera and places them in a queue. Another thread takes these images from the queue and does the processing.
@@ -23,6 +25,6 @@ http://opencv-srf.blogspot.ca/2010/09/object-detection-using-color-seperation.ht
 
 ### todo
 
-Add multi-colour gestures.
+Add mouse control gestures.
 
 Investigate GPU acceleration. Requires NVidia graphics card with CUDA.
