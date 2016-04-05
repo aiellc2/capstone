@@ -307,9 +307,10 @@ int main(int argc, char **argv) {
           imgLines = Mat::zeros(GLOBAL_ROWS,GLOBAL_COLS, CV_8UC3 );
         }
       }
-
+      //add red line to original image to trace gesture
       frame = frame + imgLines;
 
+      //show windows on screen
  			if(!frame.empty() ){
                 imshow("im1", imgThresholded);
                 imshow("im2", imgThresholded2);
