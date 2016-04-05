@@ -157,7 +157,7 @@ int main(int argc, char **argv) {
 
       if (dArea > 10000) //make sure detected area is big enough
       {
-       //calculate the position
+       //calculate the position of the object
        int posX = dM10 / dArea;
        int posY = dM01 / dArea;
 
