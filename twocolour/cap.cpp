@@ -17,7 +17,8 @@
 #define res_mapx(X) ((X * SCREEN_RES_HOR / GLOBAL_COLS)) //map 640x360 to screen resolution
 #define res_mapy(X) (X * SCREEN_RES_VER / GLOBAL_ROWS)
 
-
+int speechRunning = 0;
+double dArea3 = 0;
 
 
 using namespace cv;
@@ -30,6 +31,7 @@ pthread_mutex_t mutex;
 sem_t *s1;
 sem_t *s2;
 
+
 struct mouseMove{
   int x;
   int y;
@@ -37,7 +39,8 @@ struct mouseMove{
 
 struct mouseMove mouse;
 
-VideoCapture capture(0); // open the default camera
+VideoCapture capture(1); // open the default camera
+
 
 
 void *mouseControl(void *threadid){
@@ -49,6 +52,14 @@ void *mouseControl(void *threadid){
     sem_wait(s2); //wait for signal
     //printf("mouse move\n");
     //printf("mouse.x %d\n",mouse.x);
+
+    if(dArea3>10000){
+      //do a left click
+      // "cliclick kd:ctrl c:." for right click
+      system("cliclick c:.");
+    }
+
+
     x_avg += mouse.x;
     y_avg += mouse.y;
 
@@ -98,30 +109,48 @@ int main(int argc, char **argv) {
     // Check VideoCapture documentation.
     pthread_mutex_init(&mutex, NULL);
     namedWindow("im1", 0);
-    pthread_t thread[2];
+    pthread_t thread[3];
     int rc;
     long t;
     sem_unlink("sem1");
     sem_unlink("sem2");
 
+
     s1 = sem_open("sem1", O_CREAT, 0777, 0);
     s2 = sem_open("sem2", O_CREAT, 0777, 0);
+
 
 
     rc = pthread_create(&thread[0], NULL, cap, (void *) t); //creates threads to run video capture
     rc = pthread_create(&thread[1], NULL, mouseControl, (void *) t); //creates thread to run mouseControl
 
+    system("./speech&"); //call external app for voice recognition
+
+
     Mat frame;
-    Mat im_HSV, im_HSV2;
-    Mat imgThresholded, imgThresholded2;
+    Mat im_HSV, im_HSV2, im_HSV3;
+
+    Mat imgThresholded, imgThresholded2, imgThresholded3;
 
     namedWindow("Control", CV_WINDOW_AUTOSIZE); //create a window called "Control"
     namedWindow("Control2", CV_WINDOW_AUTOSIZE); //create a window called "Control"
+    namedWindow("Control3", CV_WINDOW_AUTOSIZE); //create a window called "Control"
+
 
     //namedWindow("HuePreview", CV_WINDOW_AUTOSIZE);
     //114 141 75 161 255 255 default red
 
     //36 86 101 88 255 255 default green
+    int iLowH3 = 0;
+    int iHighH3 = 0;
+
+    int iLowS3 = 86;   //blues
+    int iHighS3 = 255;
+
+    int iLowV3= 101;
+    int iHighV3 = 255;
+
+
 
     int iLowH2 = 10;
     int iHighH2 = 88;
@@ -131,6 +160,8 @@ int main(int argc, char **argv) {
 
     int iLowV2= 101;
     int iHighV2 = 255;
+
+
 
     int iLowH = 114;
     int iHighH = 151;
@@ -154,6 +185,9 @@ int main(int argc, char **argv) {
     cvCreateTrackbar("Min Value", "Control", &iLowV, 255); //Value (0 - 255)
     cvCreateTrackbar("Max Value", "Control", &iHighV, 255);
 
+    cvCreateTrackbar("Gesture Sensitivity", "Control", &gestureSensitivity, (500-100));
+
+
     //Create trackbars in "Control" window
     cvCreateTrackbar("Min Hue", "Control2", &iLowH2, 179); //Hue (0 - 179)
     cvCreateTrackbar("Max Hue", "Control2", &iHighH2, 179);
@@ -164,13 +198,23 @@ int main(int argc, char **argv) {
     cvCreateTrackbar("Min Value", "Control2", &iLowV2, 255); //Value (0 - 255)
     cvCreateTrackbar("Max Value", "Control2", &iHighV2, 255);
 
-    cvCreateTrackbar("Gesture Sensitivity", "Control", &gestureSensitivity, (500-100));
+    //Create trackbars in "Control" window
+    cvCreateTrackbar("Min Hue", "Control3", &iLowH3, 179); //Hue (0 - 179)
+    cvCreateTrackbar("Max Hue", "Control3", &iHighH3, 179);
+
+    cvCreateTrackbar("Min Saturation", "Control3", &iLowS3, 255); //Saturation (0 - 255)
+    cvCreateTrackbar("Max Saturation", "Control3", &iHighS3, 255);
+
+    cvCreateTrackbar("Min Value", "Control3", &iLowV3, 255); //Value (0 - 255)
+    cvCreateTrackbar("Max Value", "Control3", &iHighV3, 255);
+
 
     int iLastX = -1;
     int iLastY = -1;
 
     int iLastX2 = -1;
     int iLastY2 = -1;
+
 
     double dM01;
     double dM10;
@@ -179,6 +223,9 @@ int main(int argc, char **argv) {
     double dM012;
     double dM102;
     double dArea2;
+
+    double dM013;
+    double dM103;
 
     int shrink = 0 , grow = 0;
     int lastDist = 0;
@@ -189,6 +236,9 @@ int main(int argc, char **argv) {
     sem_wait(s1);
     Mat imgLines = Mat::zeros(GLOBAL_ROWS,GLOBAL_COLS, CV_8UC3 );
     Mat imgLines2 = Mat::zeros(GLOBAL_ROWS,GLOBAL_COLS, CV_8UC3 );
+
+    Mat disp = Mat::zeros(GLOBAL_ROWS,GLOBAL_COLS, CV_8UC3 );
+
     for (;;) {
       sem_wait(s1);
 
@@ -200,11 +250,13 @@ int main(int argc, char **argv) {
 
       cvtColor(frame,im_HSV,COLOR_RGB2HSV);
       im_HSV2 = im_HSV;
+      im_HSV3 = im_HSV;
 
       inRange(im_HSV, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), imgThresholded); //Threshold the image
       inRange(im_HSV2, Scalar(iLowH2, iLowS2, iLowV2), Scalar(iHighH2, iHighS2, iHighV2), imgThresholded2); //Threshold the image
+      inRange(im_HSV3, Scalar(iLowH3, iLowS3, iLowV3), Scalar(iHighH3, iHighS3, iHighV3), imgThresholded3); //Threshold the image
 
-
+      disp = Mat::zeros(GLOBAL_ROWS,GLOBAL_COLS, CV_8UC3 );
 
       // (filter small objects from the foreground)
       erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
@@ -214,16 +266,31 @@ int main(int argc, char **argv) {
       dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
       erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 
+
       erode(imgThresholded2, imgThresholded2, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
       dilate( imgThresholded2, imgThresholded2, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 
-       //(filter small holes in the foreground)
       dilate( imgThresholded2, imgThresholded2, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
       erode(imgThresholded2, imgThresholded2, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+
+
+      erode(imgThresholded3, imgThresholded3, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+      dilate( imgThresholded3, imgThresholded3, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+
+      dilate( imgThresholded3, imgThresholded3, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+      erode(imgThresholded3, imgThresholded3, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
+
+
+      disp.setTo(Scalar(0,0,255), imgThresholded); //red display
+      disp.setTo(Scalar(0,255,0), imgThresholded2); //green display
+      disp.setTo(Scalar(255,0,0), imgThresholded3); //red display
+
 
       //get the position of detected shapes
       Moments oMoments = moments(imgThresholded);
       Moments oMoments2 = moments(imgThresholded2);
+      Moments oMoments3 = moments(imgThresholded3);
+
 
 
       dM01 = oMoments.m01;
@@ -233,6 +300,10 @@ int main(int argc, char **argv) {
       dM012 = oMoments2.m01;
       dM102 = oMoments2.m10;
       dArea2 = oMoments2.m00;
+
+      dM013 = oMoments3.m01;
+      dM103 = oMoments3.m10;
+      dArea3 = oMoments3.m00;
 
       if (dArea > 10000 && dArea2 <1000) //make sure detected area is big enough
       {
@@ -357,7 +428,12 @@ int main(int argc, char **argv) {
         mouse.x = res_mapx((GLOBAL_COLS - posX2));
         mouse.y = res_mapy(posY2);
 
+
+
         sem_post(s2); //signal mousecontrol to proceed
+
+
+
 
       }
 
@@ -373,6 +449,8 @@ int main(int argc, char **argv) {
           iLastY=-1;
 
           imgLines = Mat::zeros(GLOBAL_ROWS,GLOBAL_COLS, CV_8UC3 );
+
+
         }
       }
       //add red line to original image to trace gesture
@@ -380,8 +458,8 @@ int main(int argc, char **argv) {
 
       //show windows on screen
  			if(!frame.empty() ){
-                imshow("im1", imgThresholded);
-                imshow("im2", imgThresholded2);
+                imshow("im1", disp);
+                //imshow("im2", imgThresholded2);
                 imshow("original", frame);
                 //imshow("HuePreview", diagBGR);
                 waitKey(1);

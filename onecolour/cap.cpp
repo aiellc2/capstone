@@ -218,12 +218,19 @@ int main(int argc, char **argv) {
           iLastY=-1;
 
           imgLines = Mat::zeros(GLOBAL_ROWS,GLOBAL_COLS, CV_8UC3 );
+
+
+          system("./speech"); //wait for speech command
+
         }
+
       }
 
       frame = frame + imgLines;
 
  			if(!frame.empty()){
+        system("./speech"); //wait for speech command
+
                 imshow("im1", imgThresholded);
                 imshow("original", frame);
                 imshow("HuePreview", diagBGR);
