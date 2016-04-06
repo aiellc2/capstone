@@ -18,6 +18,8 @@ Performance has been improved by using multithreading. One thread captures image
 
 OpenCV documentation suggests using the [HSV colour space] (https://en.wikipedia.org/wiki/HSL_and_HSV) for colour tracking. There are now some on-screen sliders that let you tweak the colour settings to get a good match depending on the condition.
 
+Added voice recognition for "bookmark" to add a bookmark.
+
 Reduced to one preview windows for all colours. https://dl.dropboxusercontent.com/u/12899811/colourss.png</img>
 ![alt tag](https://dl.dropboxusercontent.com/u/12899811/colourss.png)
 Some sample OpenCV code:
