@@ -6,6 +6,10 @@
 #include <cmath>
 #include <stdlib.h>
 #include <stdio.h>
+#include <iostream>
+#include <fstream>
+#include <string>
+
 
 
 #define GLOBAL_COLS 640
@@ -20,6 +24,7 @@
 int speechRunning = 0;
 double dArea3 = 0;
 
+int params[18];
 
 using namespace cv;
 
@@ -39,8 +44,87 @@ struct mouseMove{
 
 struct mouseMove mouse;
 
-VideoCapture capture(1); // open the default camera
+VideoCapture capture(0); // open the default camera
 
+void saveSettings(int a, int b, int c,\
+                  int d, int e, int f,\
+                  int g, int h, int i,\
+                  int j, int k, int l,\
+                  int m, int n, int o,\
+                  int p, int q, int r){
+
+  std::ofstream myfile;
+  myfile.open ("parameters.txt");
+  //myfile << "Writing this to a file.\n";
+  myfile << a;
+  myfile << "\n";
+  myfile << b; //low1
+  myfile << "\n";
+  myfile << c;
+  myfile << "\n";
+
+  myfile << d;
+  myfile << "\n";
+  myfile << e;//high1
+  myfile << "\n";
+  myfile << f;
+  myfile << "\n";
+
+  myfile << g;
+  myfile << "\n";
+  myfile << h;//low2
+  myfile << "\n";
+  myfile << i;
+  myfile << "\n";
+
+  myfile << j;
+  myfile << "\n";
+  myfile << k;//high2
+  myfile << "\n";
+  myfile << l;
+  myfile << "\n";
+
+  myfile << m;
+  myfile << "\n";
+  myfile << n;//high2
+  myfile << "\n";
+  myfile << o;
+  myfile << "\n";
+
+  myfile << p;
+  myfile << "\n";
+  myfile << q;//high2
+  myfile << "\n";
+  myfile << r;
+  myfile << "\n";
+
+
+
+  myfile.close();
+
+}
+
+int readSettings(int index){
+  int line;
+  std::ifstream myfile ("parameters.txt");
+  if (myfile.is_open())
+  {
+    for(int i = 0; i<18; i++)
+    {
+      //getline (myfile,line);
+      myfile >> params[i];
+      std::cout << i<<" "<<params[i] << '\n';
+
+    }
+
+    myfile.close();
+  }
+
+
+  return line;
+  //return 0;
+
+}
 
 
 void *mouseControl(void *threadid){
@@ -82,7 +166,7 @@ void *mouseControl(void *threadid){
 }
 
 void *cap(void *threadid) {
-    std::cout << "1this is cap\n";
+    std::cout << "A Handsfree E-Reading Apparatus\n Group 02\n";
     capture >> tempCap;
     while (1) {
 
@@ -108,7 +192,10 @@ int main(int argc, char **argv) {
     // open the default camera, use something different from 0 otherwise;
     // Check VideoCapture documentation.
     pthread_mutex_init(&mutex, NULL);
-    namedWindow("im1", 0);
+    namedWindow("colours", WINDOW_AUTOSIZE);
+    namedWindow("original", WINDOW_AUTOSIZE);
+
+
     pthread_t thread[3];
     int rc;
     long t;
@@ -132,81 +219,117 @@ int main(int argc, char **argv) {
 
     Mat imgThresholded, imgThresholded2, imgThresholded3;
 
-    namedWindow("Control", CV_WINDOW_AUTOSIZE); //create a window called "Control"
-    namedWindow("Control2", CV_WINDOW_AUTOSIZE); //create a window called "Control"
-    namedWindow("Control3", CV_WINDOW_AUTOSIZE); //create a window called "Control"
+    namedWindow("RED", CV_WINDOW_AUTOSIZE); //create a window called "Control"
+    namedWindow("GREEN", CV_WINDOW_AUTOSIZE); //create a window called "Control"
+    namedWindow("BLUE", CV_WINDOW_AUTOSIZE); //create a window called "Control"
 
 
     //namedWindow("HuePreview", CV_WINDOW_AUTOSIZE);
     //114 141 75 161 255 255 default red
 
     //36 86 101 88 255 255 default green
-    int iLowH3 = 0;
-    int iHighH3 = 0;
+    // int iLowH3 = 0;
+    // int iHighH3 = 10;
+    //
+    // int iLowS3 = 86;   //blues
+    // int iHighS3 = 255;
+    //
+    // int iLowV3= 101;
+    // int iHighV3 = 255;
+    //
+    //
+    //
+    // int iLowH2 = 10;
+    // int iHighH2 = 88;
+    //
+    // int iLowS2 = 86; //greens
+    // int iHighS2 = 255;
+    //
+    // int iLowV2= 101;
+    // int iHighV2 = 255;
+    //
+    //
+    //
+    // int iLowH = 114;
+    // int iHighH = 151;
+    //
+    // int iLowS = 141;   //reds
+    // int iHighS = 255;
+    //
+    // int iLowV = 75;
+    // int iHighV = 255;
 
-    int iLowS3 = 86;   //blues
-    int iHighS3 = 255;
+    readSettings(18);
 
-    int iLowV3= 101;
-    int iHighV3 = 255;
+    int iLowH3 = params[12];
+    int iHighH3 = params[15];
 
+    int iLowS3 = params[13];   //blues
+    int iHighS3 = params[16];
 
-
-    int iLowH2 = 10;
-    int iHighH2 = 88;
-
-    int iLowS2 = 86; //greens
-    int iHighS2 = 255;
-
-    int iLowV2= 101;
-    int iHighV2 = 255;
+    int iLowV3= params[14];
+    int iHighV3 = params[17];
 
 
 
-    int iLowH = 114;
-    int iHighH = 151;
+    int iLowH2 = params[6];
+    int iHighH2 = params[9];
 
-    int iLowS = 141;   //reds
-    int iHighS = 255;
+    int iLowS2 = params[7]; //greens
+    int iHighS2 = params[10];
 
-    int iLowV = 75;
-    int iHighV = 255;
+    int iLowV2= params[8];
+    int iHighV2 = params[11];
+
+
+
+    int iLowH = params[0];
+    int iHighH = params[3];
+
+    int iLowS = params[1];   //reds
+    int iHighS = params[4];
+
+    int iLowV = params[2];
+    int iHighV = params[5];
 
     int gestureSensitivity=(275-100);
 
+    // saveSettings(iLowH, iLowS, iLowV, iHighH, iHighS, iHighV,\
+    //             iLowH2, iLowS2, iLowV2, iHighH2, iHighS2, iHighV2,\
+    //             iLowH3, iLowS3, iLowV3, iHighH3, iHighS3, iHighV3);
 
     //Create trackbars in "Control" window
-    cvCreateTrackbar("Min Hue", "Control", &iLowH, 179); //Hue (0 - 179)
-    cvCreateTrackbar("Max Hue", "Control", &iHighH, 179);
+    cvCreateTrackbar("Min Hue", "RED", &iLowH, 179); //Hue (0 - 179)
+    cvCreateTrackbar("Max Hue", "RED", &iHighH, 179);
 
-    cvCreateTrackbar("Min Saturation", "Control", &iLowS, 255); //Saturation (0 - 255)
-    cvCreateTrackbar("Max Saturation", "Control", &iHighS, 255);
+    cvCreateTrackbar("Min Saturation", "RED", &iLowS, 255); //Saturation (0 - 255)
+    cvCreateTrackbar("Max Saturation", "RED", &iHighS, 255);
 
-    cvCreateTrackbar("Min Value", "Control", &iLowV, 255); //Value (0 - 255)
-    cvCreateTrackbar("Max Value", "Control", &iHighV, 255);
+    cvCreateTrackbar("Min Value", "RED", &iLowV, 255); //Value (0 - 255)
+    cvCreateTrackbar("Max Value", "RED", &iHighV, 255);
 
     cvCreateTrackbar("Gesture Sensitivity", "Control", &gestureSensitivity, (500-100));
 
 
     //Create trackbars in "Control" window
-    cvCreateTrackbar("Min Hue", "Control2", &iLowH2, 179); //Hue (0 - 179)
-    cvCreateTrackbar("Max Hue", "Control2", &iHighH2, 179);
+    cvCreateTrackbar("Min Hue", "GREEN", &iLowH2, 179); //Hue (0 - 179)
+    cvCreateTrackbar("Max Hue", "GREEN", &iHighH2, 179);
 
-    cvCreateTrackbar("Min Saturation", "Control2", &iLowS2, 255); //Saturation (0 - 255)
-    cvCreateTrackbar("Max Saturation", "Control2", &iHighS2, 255);
+    cvCreateTrackbar("Min Saturation", "GREEN", &iLowS2, 255); //Saturation (0 - 255)
+    cvCreateTrackbar("Max Saturation", "GREEN", &iHighS2, 255);
 
-    cvCreateTrackbar("Min Value", "Control2", &iLowV2, 255); //Value (0 - 255)
-    cvCreateTrackbar("Max Value", "Control2", &iHighV2, 255);
+    cvCreateTrackbar("Min Value", "GREEN", &iLowV2, 255); //Value (0 - 255)
+    cvCreateTrackbar("Max Value", "GREEN", &iHighV2, 255);
 
     //Create trackbars in "Control" window
-    cvCreateTrackbar("Min Hue", "Control3", &iLowH3, 179); //Hue (0 - 179)
-    cvCreateTrackbar("Max Hue", "Control3", &iHighH3, 179);
+    cvCreateTrackbar("Min Hue", "BLUE", &iLowH3, 179); //Hue (0 - 179)
+    cvCreateTrackbar("Max Hue", "BLUE", &iHighH3, 179);
 
-    cvCreateTrackbar("Min Saturation", "Control3", &iLowS3, 255); //Saturation (0 - 255)
-    cvCreateTrackbar("Max Saturation", "Control3", &iHighS3, 255);
+    cvCreateTrackbar("Min Saturation", "BLUE", &iLowS3, 255); //Saturation (0 - 255)
+    cvCreateTrackbar("Max Saturation", "BLUE", &iHighS3, 255);
 
-    cvCreateTrackbar("Min Value", "Control3", &iLowV3, 255); //Value (0 - 255)
-    cvCreateTrackbar("Max Value", "Control3", &iHighV3, 255);
+    cvCreateTrackbar("Min Value", "BLUE", &iLowV3, 255); //Value (0 - 255)
+    cvCreateTrackbar("Max Value", "BLUE", &iHighV3, 255);
 
 
     int iLastX = -1;
@@ -371,15 +494,18 @@ int main(int argc, char **argv) {
         //printf("shrink: %d grow: %d dist: %d\n",shrink, grow, abs(posX - posX2));
 
 
-
-
         if(abs(posX - posX2) < lastDist){
             shrink++;
             grow=0;
             lastDist = abs(posX - posX2);
             if(shrink >= 5){
               shrink = 0;
-              printf("SHRINK\n");
+              printf("SHRINK\nSettings Saved\n");
+
+              saveSettings(iLowH, iLowS, iLowV, iHighH, iHighS, iHighV,\
+                          iLowH2, iLowS2, iLowV2, iHighH2, iHighS2, iHighV2,\
+                          iLowH3, iLowS3, iLowV3, iHighH3, iHighS3, iHighV3);
+
               system("osascript -e 'activate application \"iBooks\"'");
               usleep(10000);
               system("osascript -e 'tell application \"System Events\"' -e 'key code 27 using {shift down, command down}' -e 'end'");
@@ -458,8 +584,8 @@ int main(int argc, char **argv) {
 
       //show windows on screen
  			if(!frame.empty() ){
-                imshow("im1", disp);
-                //imshow("im2", imgThresholded2);
+                imshow("colours", disp);
+                //imshow("im2", imgThresholded2);f
                 imshow("original", frame);
                 //imshow("HuePreview", diagBGR);
                 waitKey(1);
