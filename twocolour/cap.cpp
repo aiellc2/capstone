@@ -19,7 +19,7 @@
 #define SCREEN_RES_VER 900
 
 #define res_mapx(X) ((X * SCREEN_RES_HOR / GLOBAL_COLS)) //map 640x360 to screen resolution
-#define res_mapy(X) (X * SCREEN_RES_VER / GLOBAL_ROWS)
+#define res_mapy(X) ((X * SCREEN_RES_VER / GLOBAL_ROWS))
 
 int speechRunning = 0;
 double dArea3 = 0;
@@ -44,7 +44,7 @@ struct mouseMove{
 
 struct mouseMove mouse;
 
-VideoCapture capture(0); // open the default camera
+VideoCapture capture(1); // open the default camera
 
 void saveSettings(int a, int b, int c,\
                   int d, int e, int f,\
@@ -502,7 +502,7 @@ int main(int argc, char **argv) {
               shrink = 0;
               printf("SHRINK\nSettings Saved\n");
 
-              saveSettings(iLowH, iLowS, iLowV, iHighH, iHighS, iHighV,\
+              //saveSettings(iLowH, iLowS, iLowV, iHighH, iHighS, iHighV,\
                           iLowH2, iLowS2, iLowV2, iHighH2, iHighS2, iHighV2,\
                           iLowH3, iLowS3, iLowV3, iHighH3, iHighS3, iHighV3);
 
