@@ -229,7 +229,6 @@ int main(int argc, char **argv) {
       frame = frame + imgLines;
 
  			if(!frame.empty()){
-        system("./speech"); //wait for speech command
 
                 imshow("im1", imgThresholded);
                 imshow("original", frame);

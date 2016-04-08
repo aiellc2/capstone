@@ -3,6 +3,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <queue>
+#include <signal.h>
 #include <cmath>
 #include <stdlib.h>
 #include <stdio.h>
@@ -15,10 +16,10 @@
 #define GLOBAL_COLS 640
 #define GLOBAL_ROWS 360
 
-#define SCREEN_RES_HOR 1440
-#define SCREEN_RES_VER 900
+#define SCREEN_RES_HOR 1920
+#define SCREEN_RES_VER 1080
 
-#define res_mapx(X) ((X * SCREEN_RES_HOR / GLOBAL_COLS)) //map 640x360 to screen resolution
+#define res_mapx(X) ((X * SCREEN_RES_HOR / GLOBAL_COLS)+1440) //map 640x360 to screen resolution
 #define res_mapy(X) ((X * SCREEN_RES_VER / GLOBAL_ROWS))
 
 int speechRunning = 0;
@@ -45,6 +46,15 @@ struct mouseMove{
 struct mouseMove mouse;
 
 VideoCapture capture(1); // open the default camera
+
+void exit_handler(int s){
+           printf("Caught signal %d\n",s);
+           system("killall speech");
+           usleep(500000);
+           std::terminate();
+           //exit(0);
+
+}
 
 void saveSettings(int a, int b, int c,\
                   int d, int e, int f,\
@@ -113,11 +123,12 @@ int readSettings(int index){
     {
       //getline (myfile,line);
       myfile >> params[i];
-      std::cout << i<<" "<<params[i] << '\n';
+      //std::cout << i<<" "<<params[i] << '\n';
 
     }
 
     myfile.close();
+    std::cout<<"Imported previous parameters\n";
   }
 
 
@@ -166,7 +177,7 @@ void *mouseControl(void *threadid){
 }
 
 void *cap(void *threadid) {
-    std::cout << "A Handsfree E-Reading Apparatus\n Group 02\n";
+    std::cout << "\n\n\n\tA Handsfree E-Reading Apparatus\n\t\t Group L02\n\n\n";
     capture >> tempCap;
     while (1) {
 
@@ -195,6 +206,13 @@ int main(int argc, char **argv) {
     namedWindow("colours", WINDOW_AUTOSIZE);
     namedWindow("original", WINDOW_AUTOSIZE);
 
+    struct sigaction sigIntHandler;
+
+    sigIntHandler.sa_handler = exit_handler;
+    sigemptyset(&sigIntHandler.sa_mask);
+    sigIntHandler.sa_flags = 0;
+
+    sigaction(SIGINT, &sigIntHandler, NULL);
 
     pthread_t thread[3];
     int rc;
@@ -223,41 +241,6 @@ int main(int argc, char **argv) {
     namedWindow("GREEN", CV_WINDOW_AUTOSIZE); //create a window called "Control"
     namedWindow("BLUE", CV_WINDOW_AUTOSIZE); //create a window called "Control"
 
-
-    //namedWindow("HuePreview", CV_WINDOW_AUTOSIZE);
-    //114 141 75 161 255 255 default red
-
-    //36 86 101 88 255 255 default green
-    // int iLowH3 = 0;
-    // int iHighH3 = 10;
-    //
-    // int iLowS3 = 86;   //blues
-    // int iHighS3 = 255;
-    //
-    // int iLowV3= 101;
-    // int iHighV3 = 255;
-    //
-    //
-    //
-    // int iLowH2 = 10;
-    // int iHighH2 = 88;
-    //
-    // int iLowS2 = 86; //greens
-    // int iHighS2 = 255;
-    //
-    // int iLowV2= 101;
-    // int iHighV2 = 255;
-    //
-    //
-    //
-    // int iLowH = 114;
-    // int iHighH = 151;
-    //
-    // int iLowS = 141;   //reds
-    // int iHighS = 255;
-    //
-    // int iLowV = 75;
-    // int iHighV = 255;
 
     readSettings(18);
 
@@ -293,10 +276,8 @@ int main(int argc, char **argv) {
     int iHighV = params[5];
 
     int gestureSensitivity=(275-100);
-
-    // saveSettings(iLowH, iLowS, iLowV, iHighH, iHighS, iHighV,\
-    //             iLowH2, iLowS2, iLowV2, iHighH2, iHighS2, iHighV2,\
-    //             iLowH3, iLowS3, iLowV3, iHighH3, iHighS3, iHighV3);
+    int save = 0;
+    int zoomSensitivity = 6;
 
     //Create trackbars in "Control" window
     cvCreateTrackbar("Min Hue", "RED", &iLowH, 179); //Hue (0 - 179)
@@ -308,8 +289,10 @@ int main(int argc, char **argv) {
     cvCreateTrackbar("Min Value", "RED", &iLowV, 255); //Value (0 - 255)
     cvCreateTrackbar("Max Value", "RED", &iHighV, 255);
 
-    cvCreateTrackbar("Gesture Sensitivity", "Control", &gestureSensitivity, (500-100));
+    cvCreateTrackbar("Gesture Sensitivity", "RED", &gestureSensitivity, (500-100));
+    cvCreateTrackbar("Zoom Sensitivity", "RED", &zoomSensitivity, 14);
 
+    cvCreateTrackbar("Save", "RED", &save, 1);
 
     //Create trackbars in "Control" window
     cvCreateTrackbar("Min Hue", "GREEN", &iLowH2, 179); //Hue (0 - 179)
@@ -330,6 +313,15 @@ int main(int argc, char **argv) {
 
     cvCreateTrackbar("Min Value", "BLUE", &iLowV3, 255); //Value (0 - 255)
     cvCreateTrackbar("Max Value", "BLUE", &iHighV3, 255);
+
+    cvMoveWindow("RED", 15, 30);
+    cvMoveWindow("GREEN", 223, 30);
+    cvMoveWindow("BLUE", 430, 30);
+    cvMoveWindow("original", 1475, 50);
+    cvMoveWindow("colours", 1475, 500);
+
+
+
 
 
     int iLastX = -1;
@@ -370,6 +362,7 @@ int main(int argc, char **argv) {
       capBuffer.pop();
 
       pthread_mutex_unlock(&mutex);
+      imshow("step1",frame);
 
       cvtColor(frame,im_HSV,COLOR_RGB2HSV);
       im_HSV2 = im_HSV;
@@ -378,6 +371,7 @@ int main(int argc, char **argv) {
       inRange(im_HSV, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), imgThresholded); //Threshold the image
       inRange(im_HSV2, Scalar(iLowH2, iLowS2, iLowV2), Scalar(iHighH2, iHighS2, iHighV2), imgThresholded2); //Threshold the image
       inRange(im_HSV3, Scalar(iLowH3, iLowS3, iLowV3), Scalar(iHighH3, iHighS3, iHighV3), imgThresholded3); //Threshold the image
+
 
       disp = Mat::zeros(GLOBAL_ROWS,GLOBAL_COLS, CV_8UC3 );
 
@@ -408,6 +402,15 @@ int main(int argc, char **argv) {
       disp.setTo(Scalar(0,255,0), imgThresholded2); //green display
       disp.setTo(Scalar(255,0,0), imgThresholded3); //red display
 
+
+      if(save){
+        saveSettings(iLowH, iLowS, iLowV, iHighH, iHighS, iHighV,\
+                    iLowH2, iLowS2, iLowV2, iHighH2, iHighS2, iHighV2,\
+                    iLowH3, iLowS3, iLowV3, iHighH3, iHighS3, iHighV3);
+        save = 0;
+        printf("Settings Saved\n");
+
+      }
 
       //get the position of detected shapes
       Moments oMoments = moments(imgThresholded);
@@ -450,7 +453,7 @@ int main(int argc, char **argv) {
 
             //right osascript -e 'tell application "System Events" to keystroke 124'
             system("osascript -e 'activate application \"iBooks\"'");
-            usleep(10000);
+            //usleep(10000);
             system("osascript -e 'tell application \"System Events\"' -e 'key code 124' -e 'end'");
             imgLines = Mat::zeros(360,640, CV_8UC3 );
 
@@ -467,7 +470,7 @@ int main(int argc, char **argv) {
           if(l_dist >= (gestureSensitivity+100)){
             printf ("LEFT DETECTED!!! - %d\n",l_dist);
             system("osascript -e 'activate application \"iBooks\"'");
-            usleep(10000);
+            //usleep(10000);
             system("osascript -e 'tell application \"System Events\"' -e 'key code 123' -e 'end'");
             imgLines = Mat::zeros(GLOBAL_ROWS,GLOBAL_COLS, CV_8UC3 );
             l_dist = 0;
@@ -498,16 +501,11 @@ int main(int argc, char **argv) {
             shrink++;
             grow=0;
             lastDist = abs(posX - posX2);
-            if(shrink >= 5){
+            if(shrink >= zoomSensitivity){
               shrink = 0;
-              printf("SHRINK\nSettings Saved\n");
-
-              //saveSettings(iLowH, iLowS, iLowV, iHighH, iHighS, iHighV,\
-                          iLowH2, iLowS2, iLowV2, iHighH2, iHighS2, iHighV2,\
-                          iLowH3, iLowS3, iLowV3, iHighH3, iHighS3, iHighV3);
-
+              printf("SHRINK\n");
               system("osascript -e 'activate application \"iBooks\"'");
-              usleep(10000);
+              //usleep(10000);
               system("osascript -e 'tell application \"System Events\"' -e 'key code 27 using {shift down, command down}' -e 'end'");
             }
         }
@@ -515,11 +513,11 @@ int main(int argc, char **argv) {
             grow++;
             shrink=0;
             lastDist = abs(posX - posX2);
-            if(grow >= 6){
+            if(grow >= zoomSensitivity){
               grow = 0;
               printf("GROW\n");
               system("osascript -e 'activate application \"iBooks\"'");
-              usleep(10000);
+              //usleep(10000);
               system("osascript -e 'tell application \"System Events\"' -e 'key code 24 using {shift down, command down}' -e 'end'");
             }
 
