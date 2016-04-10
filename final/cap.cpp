@@ -115,7 +115,7 @@ int main(int argc, char **argv) {
     int save = 0;
     int zoomSensitivity = 6;
 
-    //Create trackbars in "Control" window
+    //Add trackbars to "Control" window
     cvCreateTrackbar("Min Hue", "RED", &iLowH, 179); //Hue (0 - 179)
     cvCreateTrackbar("Max Hue", "RED", &iHighH, 179);
 
@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
     cvCreateTrackbar("Min Value", "RED", &iLowV, 255); //Value (0 - 255)
     cvCreateTrackbar("Max Value", "RED", &iHighV, 255);
 
-    cvCreateTrackbar("Gesture Sensitivity", "RED", &gestureSensitivity, (500-100));
+    cvCreateTrackbar("Gesture Sensitivity", "RED", &gestureSensitivity, (500-100)); //add controls for sensitivity
     cvCreateTrackbar("Zoom Sensitivity", "RED", &zoomSensitivity, 14);
 
     cvCreateTrackbar("Save", "RED", &save, 1);
@@ -182,8 +182,8 @@ int main(int argc, char **argv) {
     int l_dist = 0;
     int blank_count=0;
     sem_wait(s1);
+
     Mat imgLines = Mat::zeros(GLOBAL_ROWS,GLOBAL_COLS, CV_8UC3 );
-    Mat imgLines2 = Mat::zeros(GLOBAL_ROWS,GLOBAL_COLS, CV_8UC3 );
 
     Mat disp = Mat::zeros(GLOBAL_ROWS,GLOBAL_COLS, CV_8UC3 );
 
@@ -208,7 +208,7 @@ int main(int argc, char **argv) {
 
       disp = Mat::zeros(GLOBAL_ROWS,GLOBAL_COLS, CV_8UC3 );
 
-      // (filter small objects from the foreground)
+      // (filter noise from  background)
       erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
       dilate( imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 
@@ -219,7 +219,7 @@ int main(int argc, char **argv) {
 
       erode(imgThresholded2, imgThresholded2, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
       dilate( imgThresholded2, imgThresholded2, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
-
+      //repeat for three colours
       dilate( imgThresholded2, imgThresholded2, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
       erode(imgThresholded2, imgThresholded2, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)) );
 
@@ -250,11 +250,9 @@ int main(int argc, char **argv) {
       Moments oMoments2 = moments(imgThresholded2);
       Moments oMoments3 = moments(imgThresholded3);
 
-
-
-      dM01 = oMoments.m01;
-      dM10 = oMoments.m10;
-      dArea = oMoments.m00;
+      dM01 = oMoments.m01; //y coord
+      dM10 = oMoments.m10; //c coord
+      dArea = oMoments.m00;//area
 
       dM012 = oMoments2.m01;
       dM102 = oMoments2.m10;
@@ -274,7 +272,6 @@ int main(int argc, char **argv) {
        {
 
          line(imgLines, Point(posX, posY), Point(iLastX, iLastY), Scalar(0,0,255), 10);
-        //Draw a red line from the previous point to the current point
 
         if(iLastX > posX){
           l_dist = 0;
@@ -282,21 +279,17 @@ int main(int argc, char **argv) {
           r_dist += (iLastX - posX);
           if(r_dist >= (gestureSensitivity+100)){
             printf("dArea: %f RIGHT DETECTED!!! - %d\n",dArea, r_dist);
-            //osascript -e 'activate application "iBooks"'
 
-            //right osascript -e 'tell application "System Events" to keystroke 124'
             system("osascript -e 'activate application \"iBooks\"'");
             //usleep(10000);
             system("osascript -e 'tell application \"System Events\"' -e 'key code 124' -e 'end'");
             imgLines = Mat::zeros(360,640, CV_8UC3 );
 
-            //printf("iLowH: %d iLowS: %d iLowV: %d",iLowH, iLowS, iLowV);
             r_dist = 0;
           }
         }
 
         else if(iLastX < posX){
-          //printf("L_dist: %d\n",l_dist);
           r_dist = 0;
 
           l_dist += (posX - iLastX);
@@ -317,17 +310,12 @@ int main(int argc, char **argv) {
       }
 
       else if (dArea > 10000 && dArea2 > 10000){ //both colours detected
-        //printf("both...\n");
-        //printf("%d %d %d %d %d %d \n %d %d %d %d %d %d",iLowH, iLowS, iLowV, iHighH, iHighS, iHighV, iLowH2, iLowS2, iLowV2, iHighH2, iHighS2, iHighV2);
-
 
         int posX = dM10 / dArea;
         int posY = dM01 / dArea;
 
         int posX2 = dM102 / dArea2;
         int posY2 = dM012 / dArea2;
-
-        //printf("shrink: %d grow: %d dist: %d\n",shrink, grow, abs(posX - posX2));
 
 
         if(abs(posX - posX2) < lastDist){
@@ -366,16 +354,10 @@ int main(int argc, char **argv) {
       }
 
       else if(dArea2 > 10000 && dArea <1000){ //if only green
-        //mouse Control
-        //printf("Mouse!\n");
 
         int posX2 = dM102 / dArea2;
         int posY2 = dM012 / dArea2;
 
-        //iLastX2 = posX2;
-        //iLastY2 = posY2;
-
-        //printf("posx %d\n",posX2);
         posX2 = posX2 > (GLOBAL_COLS - 15) ? posX2+7 : posX2;
         posX2 = posX2 < (GLOBAL_COLS - (GLOBAL_COLS-15)) ? posX2-7 : posX2;
 
@@ -385,12 +367,7 @@ int main(int argc, char **argv) {
         mouse.x = res_mapx((GLOBAL_COLS - posX2));
         mouse.y = res_mapy(posY2);
 
-
-
         sem_post(s2); //signal mousecontrol to proceed
-
-
-
 
       }
 
@@ -410,7 +387,7 @@ int main(int argc, char **argv) {
 
         }
       }
-      //add red line to original image to trace gesture
+      //add red line to original image
       frame = frame + imgLines;
 
       //show windows on screen
