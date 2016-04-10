@@ -45,7 +45,7 @@ struct mouseMove{
 
 struct mouseMove mouse;
 
-VideoCapture capture(1); // open the default camera
+VideoCapture capture(0); // open the default camera
 
 void exit_handler(int s){
            printf("Caught signal %d\n",s);
@@ -362,7 +362,7 @@ int main(int argc, char **argv) {
       capBuffer.pop();
 
       pthread_mutex_unlock(&mutex);
-      imshow("step1",frame);
+      //imshow("step1",frame);
 
       cvtColor(frame,im_HSV,COLOR_RGB2HSV);
       im_HSV2 = im_HSV;

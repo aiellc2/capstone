@@ -15,49 +15,49 @@ class Dispatcher:  NSObject, NSSpeechRecognizerDelegate {
             
             if command=="bookmark" || command=="book mark" {
                 task.launchPath = "/usr/bin/osascript"
-                task.arguments = ["./bookmark.scpt"]
+                task.arguments = ["./scripts/bookmark.scpt"]
                 task.launch()
 
             }
             
             if command=="enlarge" {
                 task.launchPath = "/usr/bin/osascript"
-                task.arguments = ["./enlarge.scpt"]
+                task.arguments = ["./scripts/enlarge.scpt"]
                 task.launch()
                 
             }
             
             if command=="shrink" {
                 task.launchPath = "/usr/bin/osascript"
-                task.arguments = ["./shrink.scpt"]
+                task.arguments = ["./scripts/shrink.scpt"]
                 task.launch()
                 
             }
             
             if command=="next page" {
                 task.launchPath = "/usr/bin/osascript"
-                task.arguments = ["./next.scpt"]
+                task.arguments = ["./scripts/next.scpt"]
                 task.launch()
                 
             }
             
             if command=="last page" {
                 task.launchPath = "/usr/bin/osascript"
-                task.arguments = ["./back.scpt"]
+                task.arguments = ["./scripts/back.scpt"]
                 task.launch()
                 
             }
             
             if command=="open the book" {
                 task.launchPath = "/usr/bin/osascript"
-                task.arguments = ["./open.scpt"]
+                task.arguments = ["./scripts/open.scpt"]
                 task.launch()
                 
             }
             
             if command=="close the book" {
                 task.launchPath = "/usr/bin/osascript"
-                task.arguments = ["./close.scpt"]
+                task.arguments = ["./scripts/close.scpt"]
                 task.launch()
                 
             }
